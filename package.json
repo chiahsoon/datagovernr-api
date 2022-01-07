@@ -1,0 +1,35 @@
+{
+   "name": "datagovernr-api",
+   "version": "1.0.0",
+   "main": "index.ts",
+   "license": "MIT",
+   "devDependencies": {
+      "@types/node": "^8.0.29",
+      "@typescript-eslint/eslint-plugin": "^5.6.0",
+      "@typescript-eslint/parser": "^5.6.0",
+      "eslint": "^8.4.1",
+      "eslint-config-google": "^0.14.0",
+      "husky": "^7.0.4",
+      "nodemon": "^2.0.15",
+      "ts-node": "3.3.0",
+      "typescript": "3.3.3333"
+   },
+   "dependencies": {
+      "cors": "^2.8.5",
+      "express": "^4.17.2",
+      "morgan": "^1.10.0",
+      "pg": "^8.4.0",
+      "reflect-metadata": "^0.1.10",
+      "typeorm": "0.2.41"
+   },
+   "private": true,
+   "scripts": {
+      "lint": "yarn eslint . --ext .ts --fix",
+      "start": "nodemon -e ts,yaml,md,json src/index.ts",
+      "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js",
+      "generate-migration": "yarn typeorm migration:generate -n",
+      "migrate": "yarn typeorm migration:run",
+      "revert-migration": "yarn typeorm migration:revert",
+      "postinstall": "husky install"
+   }
+}
