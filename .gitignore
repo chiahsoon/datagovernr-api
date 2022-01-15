@@ -25,3 +25,7 @@ yarn-error.log*
 # misc.
 tmp/
 temp/
+
+# Solidity
+artifacts
+cache
