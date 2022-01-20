@@ -8,8 +8,16 @@ export = {
     username: process.env.TYPEORM_USERNAME,
     password: process.env.TYPEORM_PASSWORD,
     database: process.env.TYPEORM_DATABASE,
-    // NOTE: TypeORM has a bug where the entity/migration/subscribers config for server use
-    // is always overridden by .env.* file
+    // NOTE: Bug: have to include cli.(entity/migration/subscribers) and entity/migration/subscribers
+    entities: [
+        'src/entity/**/*.ts',
+    ],
+    migrations: [
+        'src/migration/**/*.ts',
+    ],
+    subscribers: [
+        'src/subscriber/**/*.ts',
+    ],
     cli: {
         'entitiesDir': 'src/entity',
         'migrationsDir': 'src/migration',
