@@ -14,8 +14,8 @@ const router = express.Router();
 
 router.post('/',
     body('files.*.id')
-        .isString().withMessage('Invalid file id(s)')
-        .notEmpty({ignore_whitespace: true}).withMessage('Missing file id(s)'),
+        .exists().withMessage('Missing file id(s)')
+        .isNumeric().withMessage('Invalid file id(s)'),
     body('files.*.encryptedHash')
         .isString().withMessage('Invalid encryptedHash(es)')
         .notEmpty({ignore_whitespace: true}).withMessage('Missing encryptedHash(es)'),
@@ -37,20 +37,23 @@ router.get('/verify',
     query('fileId')
         .notEmpty({ignore_whitespace: true}).withMessage('Missing file id'),
     ReqValidationErrorHandler, async (req: Request, res: Response, next: NextFunction) => {
-        const fileId = req.query.fileId;
+        const fileId = parseInt(req.query.fileId);
         try {
             const repo = getConnection().getRepository(DGFileVerifier);
-            const fileVerifier = await repo.findOne({
+            const fileVerifiers = await repo.find({
                 where: {dgFileId: fileId},
                 relations: ['verifier'],
             });
-            const verifier = fileVerifier.verifier;
+            const verifier = fileVerifiers.length > 0 ? fileVerifiers[0].verifier : undefined;
 
-            const allInvolvedVerifiers = await repo.find({
-                where: {verifierId: verifier.id},
-                relations: ['dgFile'],
-            });
-            const files = allInvolvedVerifiers.map((v) => v.dgFile);
+            let files: DGFile[] = [];
+            if (verifier !== undefined) {
+                const allInvolvedVerifiers = await repo.find({
+                    where: {verifierId: verifier.id},
+                    relations: ['dgFile'],
+                });
+                files = allInvolvedVerifiers.map((v) => v.dgFile);
+            }
 
             const resp: VerificationDetails = {verifier, files};
             res.status(200);
