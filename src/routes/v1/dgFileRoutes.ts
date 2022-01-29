@@ -19,6 +19,12 @@ router.post('/',
     body('files.*.encryptedHash')
         .isString().withMessage('Invalid encryptedHash(es)')
         .notEmpty({ignore_whitespace: true}).withMessage('Missing encryptedHash(es)'),
+    body('files.*.plaintextHash')
+        .isString().withMessage('Invalid plaintextHash(es)')
+        .notEmpty({ignore_whitespace: true}).withMessage('Missing plaintextHash(es)'),
+    body('files.*.salt')
+        .isString().withMessage('Invalid salt(s)')
+        .notEmpty({ignore_whitespace: true}).withMessage('Missing salt(s)'),
     ReqValidationErrorHandler, async (req: Request, res: Response, next: NextFunction) => {
         const dgFiles: DGFile[] = req.body.files;
         try {
@@ -53,6 +59,10 @@ router.get('/verify',
                     relations: ['dgFile'],
                 });
                 files = allInvolvedVerifiers.map((v) => v.dgFile);
+            } else {
+                const dgFileRepo = getConnection().getRepository(DGFile);
+                const file = await dgFileRepo.findOne(fileId);
+                files.push(file);
             }
 
             const resp: VerificationDetails = {verifier, files};

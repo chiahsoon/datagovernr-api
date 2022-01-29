@@ -9,6 +9,12 @@ export class DGFile {
     @Column({nullable: false})
         encryptedHash: string;
 
+    @Column({nullable: false})
+        plaintextHash: string;
+
+    @Column({nullable: false})
+        salt: string;
+
     @OneToMany(() => DGFileVerifier, (dgFileVerifier) => dgFileVerifier.verifier)
         dgFileVerifiers: DGFileVerifier[];
 }
