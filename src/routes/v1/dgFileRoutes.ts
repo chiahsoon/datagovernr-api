@@ -1,16 +1,17 @@
-import express = require('express');
+import {Router} from 'express';
 import {body, query} from 'express-validator';
 import {ReqValidationErrorHandler} from '../../middleware/reqValidationErrorHandler';
 import {APIResponse} from '../../presentation/apiResponse';
 import {NextFunction, Request, Response} from 'express';
 import {DGFile} from '../../entity/DGFile';
-import {getConnection} from 'typeorm';
+import {getConnection, getRepository} from 'typeorm';
 import {InternalServerError} from '../../error/errors';
 import {DGFileVerifier} from '../../entity/DGFileVerifier';
 import {VerificationDetails} from '../../presentation/verificationDetails';
+import {stringify} from 'querystring';
 
 
-const router = express.Router();
+const router = Router();
 
 router.post('/',
     body('files.*.id')
@@ -28,7 +29,7 @@ router.post('/',
     ReqValidationErrorHandler, async (req: Request, res: Response, next: NextFunction) => {
         const dgFiles: DGFile[] = req.body.files;
         try {
-            const repo = getConnection().getRepository(DGFile);
+            const repo = getRepository(DGFile);
             const savedDgFiles = await repo.save(dgFiles);
             res.status(200);
             res.send(new APIResponse(null, savedDgFiles));
@@ -43,9 +44,9 @@ router.get('/verify',
     query('fileId')
         .notEmpty({ignore_whitespace: true}).withMessage('Missing file id'),
     ReqValidationErrorHandler, async (req: Request, res: Response, next: NextFunction) => {
-        const fileId = parseInt(req.query.fileId);
+        const fileId = parseInt(req.query.fileId.toString());
         try {
-            const repo = getConnection().getRepository(DGFileVerifier);
+            const repo = getRepository(DGFileVerifier);
             const fileVerifiers = await repo.find({
                 where: {dgFileId: fileId},
                 relations: ['verifier'],
