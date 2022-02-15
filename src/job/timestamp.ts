@@ -22,10 +22,9 @@ export const getTimestampAllFn = (timestamper: Timestamper): (() => void) => {
             const newFileVerifiers = files.map((file) => new DGFileVerifier(file.id, newVerifier.id));
             await getRepository(DGFileVerifier).save(newFileVerifiers);
 
-            console.log('Finished timestamping at ' + currentTime);
+            console.log('Submitted hash at %s: %s', currentTime.toString(), hashConcat);
         } catch (err) {
-            console.log('Failed to add timestamps at ' + currentTime);
-            console.log('Error: ', err);
+            console.log('Failed to submit hash at %s:%s' + currentTime.toString(), err.toString());
         }
     };
 };
@@ -42,14 +41,16 @@ export const getUpdateVerificationLinkFn = (timestamper: Timestamper): (() => vo
             const fileVerifiers = verifiers.map((v) => v.dgFileVerifiers);
             const verifierFiles = fileVerifiers.map((v) => v.map((fv) => fv.dgFile));
             const hashes = verifierFiles.map((files) => aggregateHashes(files));
-            const links = await timestamper.getVerifications(hashes);
-            verifiers.forEach((v, i) => links[i] !== undefined ? v.link = links[i] : null);
-            verifiers.forEach((v) => v.dgFileVerifiers = undefined); // undefined fields are skipped
+            const bufs = await timestamper.getVerificationAsData(hashes);
+
+            // @ts-ignore - skip saving dgFileVerifiers fields
+            verifiers.forEach((v) => v.dgFileVerifiers = undefined);
+            verifiers.forEach((v) => v.link = `api://file/verify/data?verifierId=${v.id}`);
+            verifiers.forEach((v, i) => v.data = bufs[i]);
             await getRepository(Verifier).save(verifiers);
-            console.log('Finished updating verification links at ' + currentTime);
+            console.log('Finished updating verification links at %s', currentTime.toString());
         } catch (err) {
-            console.log('Failed to update verification links at ' + currentTime );
-            console.log('Error: ', err);
+            console.log('Failed to update verification links at %s', currentTime.toString());
         }
     };
 };

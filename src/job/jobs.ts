@@ -2,8 +2,10 @@ import {CronJob} from 'cron';
 import {OriginStamp} from '../services/timestamper/originstamp';
 import {getTimestampAllFn, getUpdateVerificationLinkFn} from './timestamp';
 
+const API_KEY = process.env.ORIGINSTAMP_API_KEY || '';
+
 export const scheduleJobs = () => {
-    const timestampService = new OriginStamp(process.env.ORIGINSTAMP_API_KEY);
+    const timestampService = new OriginStamp(API_KEY, 2);
     const jobs = [
         new CronJob('0 0 0 * * *',
             getTimestampAllFn(timestampService),

@@ -1,5 +1,5 @@
 export class APIResponse {
-    message: string;
+    message?: string;
     data: any;
 
     constructor(message?: string, data?: any) {

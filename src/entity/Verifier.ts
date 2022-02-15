@@ -7,7 +7,10 @@ export class Verifier {
         id: number;
 
     @Column({nullable: true})
-        link: string;
+        link?: string;
+
+    @Column({nullable: true, type: 'bytea'})
+        data?: Buffer;
 
     @CreateDateColumn({nullable: false})
         createdDate: Date;

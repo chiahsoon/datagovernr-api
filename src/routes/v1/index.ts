@@ -2,11 +2,11 @@ import * as express from 'express';
 import {NextFunction, Request, Response} from 'express';
 import {APIResponse} from '../../presentation/apiResponse';
 import DGFileRoutes from './dgFileRoutes';
-import cronjobTestRoutes from './cronjobTestRoutes';
+import VerifierRoutes from './verifierRoutes';
 
 const router = express.Router();
 router.use('/file', DGFileRoutes);
-router.use('/test', cronjobTestRoutes);
+router.use('/verify', VerifierRoutes);
 
 
 router.get('/ping', (req: Request, res: Response, next: NextFunction) => {
