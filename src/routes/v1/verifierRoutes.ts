@@ -14,7 +14,7 @@ router.get('/data',
         .notEmpty({ignore_whitespace: true}).withMessage('Missing verifier id'),
     ReqValidationErrorHandler,
     async (req: Request, res: Response, next: NextFunction) => {
-        const verifierId = parseInt(req.query.verifierId == null ? '' : req.query.verifierId.toString());
+        const verifierId = parseInt(req.query.id == null ? '' : req.query.id.toString());
         try {
             const repo = getRepository(Verifier);
             const verifier = await repo.findOne({
@@ -28,7 +28,7 @@ router.get('/data',
             let ext = '';
             const fileType = filetype(verifier.data);
             if (fileType.length > 0 && fileType[0].extension) {
-                ext = fileType[0].extension;
+                ext = '.' + fileType[0].extension;
             }
 
             const readStream = new stream.PassThrough();
