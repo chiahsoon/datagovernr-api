@@ -1,6 +1,6 @@
-import dotenv = require('dotenv');
+import * as dotenv from 'dotenv';
 
-export function setupConfig() {
+export const setupConfig = () => {
     const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
 
     try {
@@ -9,4 +9,5 @@ export function setupConfig() {
     } catch (e) {
         console.log(e.message);
     }
-}
+};
+

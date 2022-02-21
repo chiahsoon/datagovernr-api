@@ -1,16 +1,15 @@
-import express = require('express');
+import {Router} from 'express';
 import {body, query} from 'express-validator';
 import {ReqValidationErrorHandler} from '../../middleware/reqValidationErrorHandler';
 import {APIResponse} from '../../presentation/apiResponse';
 import {NextFunction, Request, Response} from 'express';
 import {DGFile} from '../../entity/DGFile';
-import {getConnection} from 'typeorm';
+import {getRepository} from 'typeorm';
 import {InternalServerError} from '../../error/errors';
 import {DGFileVerifier} from '../../entity/DGFileVerifier';
 import {VerificationDetails} from '../../presentation/verificationDetails';
 
-
-const router = express.Router();
+const router = Router();
 
 router.post('/',
     body('files.*.id')
@@ -25,13 +24,14 @@ router.post('/',
     body('files.*.salt')
         .isString().withMessage('Invalid salt(s)')
         .notEmpty({ignore_whitespace: true}).withMessage('Missing salt(s)'),
-    ReqValidationErrorHandler, async (req: Request, res: Response, next: NextFunction) => {
+    ReqValidationErrorHandler,
+    async (req: Request, res: Response, next: NextFunction) => {
         const dgFiles: DGFile[] = req.body.files;
         try {
-            const repo = getConnection().getRepository(DGFile);
+            const repo = getRepository(DGFile);
             const savedDgFiles = await repo.save(dgFiles);
             res.status(200);
-            res.send(new APIResponse(null, savedDgFiles));
+            res.send(new APIResponse(undefined, savedDgFiles));
         } catch (err) {
             console.log('Error: ', err);
             next(new InternalServerError('Failed to save all tasks'));
@@ -42,32 +42,29 @@ router.post('/',
 router.get('/verify',
     query('fileId')
         .notEmpty({ignore_whitespace: true}).withMessage('Missing file id'),
-    ReqValidationErrorHandler, async (req: Request, res: Response, next: NextFunction) => {
-        const fileId = parseInt(req.query.fileId);
+    ReqValidationErrorHandler,
+    async (req: Request, res: Response, next: NextFunction) => {
+        const fileId = parseInt(req.query.fileId === undefined ? '' : req.query.fileId.toString());
+        const resp: VerificationDetails = {verifier: undefined, files: []};
+
         try {
-            const repo = getConnection().getRepository(DGFileVerifier);
+            const repo = getRepository(DGFileVerifier);
             const fileVerifiers = await repo.find({
                 where: {dgFileId: fileId},
                 relations: ['verifier'],
             });
-            const verifier = fileVerifiers.length > 0 ? fileVerifiers[0].verifier : undefined;
 
-            let files: DGFile[] = [];
-            if (verifier !== undefined) {
+            if (fileVerifiers.length > 0) {
+                resp.verifier = fileVerifiers[0].verifier;
                 const allInvolvedVerifiers = await repo.find({
-                    where: {verifierId: verifier.id},
+                    where: {verifierId: resp.verifier.id},
                     relations: ['dgFile'],
                 });
-                files = allInvolvedVerifiers.map((v) => v.dgFile);
-            } else {
-                const dgFileRepo = getConnection().getRepository(DGFile);
-                const file = await dgFileRepo.findOne(fileId);
-                files.push(file);
+                resp.files = allInvolvedVerifiers.map((v) => v.dgFile);
             }
 
-            const resp: VerificationDetails = {verifier, files};
             res.status(200);
-            res.send(new APIResponse(null, resp));
+            res.send(new APIResponse(undefined, resp));
         } catch (err) {
             console.log('Error: ', err);
             next(new InternalServerError('Failed to retrieve verification details'));
