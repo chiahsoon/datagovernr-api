@@ -39,7 +39,7 @@ router.post('/',
         }
     });
 
-router.get('/verify',
+router.get('/verifier',
     query('fileId')
         .notEmpty({ignore_whitespace: true}).withMessage('Missing file id'),
     ReqValidationErrorHandler,
@@ -68,6 +68,32 @@ router.get('/verify',
         } catch (err) {
             console.log('Error: ', err);
             next(new InternalServerError('Failed to retrieve verification details'));
+            return;
+        }
+    });
+
+router.post('/exists',
+    body('fileIds')
+        .exists().withMessage('Missing file id(s)')
+        .isArray().withMessage('Invalid file id(s) format'),
+    body('fileIds.*')
+        .isInt().withMessage('Invalid file id(s)'),
+    ReqValidationErrorHandler,
+    async (req: Request, res: Response, next: NextFunction) => {
+        const fileIds: number[] = req.body.fileIds;
+        try {
+            const existingDgFiles = await getRepository(DGFile)
+                .createQueryBuilder('dgFile')
+                .select(['dgFile.id'])
+                .whereInIds(fileIds)
+                .getMany();
+            const existingIds = new Set(existingDgFiles.map((f) => f.id));
+            const results = fileIds.map((id) => existingIds.has(id));
+            res.status(200);
+            res.send(new APIResponse(undefined, results));
+        } catch (err) {
+            console.log('Error: ', err);
+            next(new InternalServerError('Failed to check if ids'));
             return;
         }
     });
