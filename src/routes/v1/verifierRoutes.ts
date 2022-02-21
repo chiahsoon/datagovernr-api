@@ -6,6 +6,9 @@ import {InternalServerError} from '../../error/errors';
 import {ReqValidationErrorHandler} from '../../middleware/reqValidationErrorHandler';
 import filetype from 'magic-bytes.js';
 import * as stream from 'stream';
+import {OriginStamp, BlockchainCurrency} from '../../services/timestamper/originstamp';
+import {getTimestampAllFn, getUpdateVerificationLinkFn} from '../../job/timestamp';
+import {APIResponse} from '../../presentation/apiResponse';
 
 const router = Router();
 
@@ -39,6 +42,52 @@ router.get('/data',
         } catch (err) {
             console.log('Error: ', err);
             next(new InternalServerError('Failed to retrieve verification details'));
+            return;
+        }
+    });
+
+// Manually trigger cronjob of creating verifiers
+router.post('/',
+    query('currency')
+        .notEmpty({ignore_whitespace: true}).withMessage('Missing verifier currency'),
+    ReqValidationErrorHandler,
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            let currency = BlockchainCurrency.ETH;
+            if (req.query.currency != null) {
+                currency = parseInt(req.query.currency.toString());
+            }
+            const apiKey = process.env.ORIGINSTAMP_API_KEY || '';
+            const timestampService = new OriginStamp(apiKey, currency);
+            getTimestampAllFn(timestampService)();
+            res.status(200);
+            res.send(new APIResponse(undefined, 'Successfully (force) ran timestamp cronjob'));
+        } catch (err) {
+            console.log('Error: ', err);
+            next(new InternalServerError('Failed to add timestamps'));
+            return;
+        }
+    });
+
+// Manually trigger cronjob of updating verifiers
+router.patch('/',
+    query('currency')
+        .notEmpty({ignore_whitespace: true}).withMessage('Missing verifier currency'),
+    ReqValidationErrorHandler,
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            let currency = BlockchainCurrency.ETH;
+            if (req.query.currency != null) {
+                currency = parseInt(req.query.currency.toString());
+            }
+            const apiKey = process.env.ORIGINSTAMP_API_KEY || '';
+            const timestampService = new OriginStamp(apiKey, currency);
+            getUpdateVerificationLinkFn(timestampService)();
+            res.status(200);
+            res.send(new APIResponse(undefined, 'Successfully (force) ran update verification cronjob'));
+        } catch (err) {
+            console.log('Error: ', err);
+            next(new InternalServerError('Failed to verify timestamps'));
             return;
         }
     });

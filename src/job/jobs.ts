@@ -1,11 +1,12 @@
 import {CronJob} from 'cron';
-import {OriginStamp} from '../services/timestamper/originstamp';
+import {BlockchainCurrency, OriginStamp} from '../services/timestamper/originstamp';
 import {getTimestampAllFn, getUpdateVerificationLinkFn} from './timestamp';
 
 const API_KEY = process.env.ORIGINSTAMP_API_KEY || '';
 
 export const scheduleJobs = () => {
-    const timestampService = new OriginStamp(API_KEY, 2);
+    const currency = BlockchainCurrency.ETH;
+    const timestampService = new OriginStamp(API_KEY, currency);
     const jobs = [
         new CronJob('0 0 0 * * *',
             getUpdateVerificationLinkFn(timestampService),

@@ -7,7 +7,9 @@ import fetch from 'node-fetch';
 // https://api.originstamp.com/swagger/swagger-ui.html#/timestamp/createTimestamp
 // https://docs.originstamp.com/api/create-timestamp.html#submit-your-hash
 
-type BlockchainCurrency = 0 | 1 | 2; // BTC, ETH, AION
+export enum BlockchainCurrency {
+    BTC, ETH, AION
+}
 const PROOF_AS_PDF=1;
 
 export class OriginStamp implements Timestamper {

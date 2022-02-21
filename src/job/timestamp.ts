@@ -16,6 +16,13 @@ export const getTimestampAllFn = (timestamper: Timestamper): (() => void) => {
                 .where('dg_file.id NOT IN (' + fileVerifiers.getSql() + ')')
                 .orderBy('dg_file.id')
                 .getMany();
+            console.log('Involved files: ', files.map((f) => f.id));
+
+            if (files.length == 0) {
+                console.log('No files to verify at %s', currentTime.toString());
+                return;
+            }
+
             const hashConcat = aggregateHashes(files);
             await timestamper.addTimestamp(hashConcat);
             const newVerifier = await getRepository(Verifier).save(new Verifier());
@@ -38,6 +45,8 @@ export const getUpdateVerificationLinkFn = (timestamper: Timestamper): (() => vo
                 where: {link: null},
                 relations: ['dgFileVerifiers', 'dgFileVerifiers.dgFile'],
             });
+            console.log('Involved verifiers: ', verifiers.map((v) => v.id));
+
             const fileVerifiers = verifiers.map((v) => v.dgFileVerifiers);
             const verifierFiles = fileVerifiers.map((v) => v.map((fv) => fv.dgFile));
             const hashes = verifierFiles.map((files) => aggregateHashes(files));
@@ -45,7 +54,7 @@ export const getUpdateVerificationLinkFn = (timestamper: Timestamper): (() => vo
 
             // @ts-ignore - skip saving dgFileVerifiers fields
             verifiers.forEach((v) => v.dgFileVerifiers = undefined);
-            verifiers.forEach((v) => v.link = `api://file/verify/data?verifierId=${v.id}`);
+            verifiers.forEach((v) => v.link = `api://verifier/data?id=${v.id}`);
             verifiers.forEach((v, i) => v.data = bufs[i]);
             await getRepository(Verifier).save(verifiers);
             console.log('Finished updating verification links at %s', currentTime.toString());

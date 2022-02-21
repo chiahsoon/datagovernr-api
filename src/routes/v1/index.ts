@@ -6,7 +6,7 @@ import VerifierRoutes from './verifierRoutes';
 
 const router = express.Router();
 router.use('/file', DGFileRoutes);
-router.use('/verify', VerifierRoutes);
+router.use('/verifier', VerifierRoutes);
 
 
 router.get('/ping', (req: Request, res: Response, next: NextFunction) => {
