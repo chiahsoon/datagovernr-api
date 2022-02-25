@@ -1,6 +1,9 @@
+import {setupConfig} from '../config/config';
 import {CronJob} from 'cron';
 import {BlockchainCurrency, OriginStamp} from '../services/timestamper/originstamp';
 import {getTimestampAllFn, getUpdateVerificationLinkFn} from './timestamp';
+
+setupConfig();
 
 const API_KEY = process.env.ORIGINSTAMP_API_KEY || '';
 
