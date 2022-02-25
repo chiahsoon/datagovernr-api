@@ -54,7 +54,7 @@ export const getUpdateVerificationLinkFn = (timestamper: Timestamper): (() => vo
 
             // @ts-ignore - skip saving dgFileVerifiers fields
             verifiers.forEach((v) => v.dgFileVerifiers = undefined);
-            verifiers.forEach((v) => v.link = `api://verifier/data?id=${v.id}`);
+            verifiers.forEach((v, i) => bufs[i] == null ? v.link = `api://verifier/data?id=${v.id}` : null);
             verifiers.forEach((v, i) => v.data = bufs[i]);
             await getRepository(Verifier).save(verifiers);
             console.log('Finished updating verification links at %s', currentTime.toString());
