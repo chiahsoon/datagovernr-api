@@ -61,6 +61,10 @@ router.get('/verifier',
                     relations: ['dgFile'],
                 });
                 resp.files = allInvolvedVerifiers.map((v) => v.dgFile);
+            } else {
+                resp.files = await getRepository(DGFile).find({
+                    where: {id: fileId},
+                });
             }
 
             res.status(200);
