@@ -1,0 +1,271 @@
+# Ref: https://editor.swagger.io/, https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3
+
+swagger: "2.0"
+info:
+  title: DataGovernR API
+  description: API description for DataGovernR
+  version: 1.0.0
+host: -
+basePath: /api/v1
+schemes:
+  - https
+  - http
+tags:
+  - name: "file"
+    description: "CRUD operations for the `DGFile` entity"
+  - name: "verifier"
+    description: "CRUD operations for the `Verifier` entity"
+# securityDefinitions:
+#   cookieAuth:
+#     type: "apiKey"
+#     name: "apiKey"
+#     in: "cookie"
+components:
+  schemas:
+    DGFile:
+      type: object
+      properties:
+        id:
+          type: number
+        plaintextHash:
+          type: string
+        encryptedHash:
+          type: string
+        salt:
+          type: string
+    Verifier:
+      type: object
+      properties:
+        id:
+          type: number
+        link:
+          type: string
+        createdDate:
+          type: string
+          format: date-time
+        data:
+          type: string
+          format: string
+    DGFileVerifier:
+      type: object
+      properties:
+        dgFileId:
+          type: number
+        verifierId:
+          type: number
+    FileVerifiersInfo:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: "#/components/schemas/Verifier"
+            - type: array
+              items:
+                $ref: "#/components/schemas/DGFile"
+    Error:
+      type: object
+      properties:
+        msg:
+          type: string
+paths:
+  /file:
+    post:
+      tags:
+        - "file"
+      summary: Creates new files.
+      description: >-
+        Creates a new DGFile. <br>
+        `id` - id of file in Dataverse <br>
+        `salt` - base64 encoded salt string used to generate the encryption key <br>
+        `plaintextHash`, `encryptedHash` - base64 encoded SHA-512 hashes of the plaintext and encrypted versions of the file.
+      produces:
+        - application/json
+      parameters:
+        - in: "body"
+          description: "Fields for files"
+          required: true
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/DGFile"
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DGFile"
+        400:
+          description: The request files are invalid.
+          schema:
+            $ref: "#/components/schemas/Error"
+        500:
+          description: An internal server error has occurred.
+          schema:
+            $ref: "#/components/schemas/Error"
+  /file/verifier:
+    get:
+      tags:
+        - "file"
+      summary: Retrieves files involved in verification.
+      description: >-
+        Multiple file (`plaintextHash`, `encryptedHash`) hashes are concatenated and hashed to obtain the final hash. <br>
+        This endpoint returns the verifier (if exists) and files involved (if no verifier, the file itself is returned) in obtaining the final hash.
+      produces:
+        - application/json
+      parameters:
+        - name: fileId
+          in: query
+          description: ID of File
+          required: true
+          type: number
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            $ref: "#/components/schemas/FileVerifiersInfo"
+        400:
+          description: The fileId parameter is missing or invalid
+          schema:
+            $ref: "#/components/schemas/Error"
+        500:
+          description: An internal server error has occurred.
+          schema:
+            $ref: "#/components/schemas/Error"
+  /file/exists:
+    get:
+      tags:
+        - "file"
+      summary: Checks whether file IDs exists.
+      description: >-
+        Given an array of file IDs, returns an array of booleans representing the existence of the file ID at each index.
+      produces:
+        - application/json
+      parameters:
+        - in: "body"
+          description: "File IDs"
+          required: true
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: number
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: boolean
+        400:
+          description: The request doesn't have an array of valid file IDs.
+          schema:
+            $ref: "#/components/schemas/Error"
+        500:
+          description: An internal server error has occurred.
+          schema:
+            $ref: "#/components/schemas/Error"
+  /verifier:
+    post:
+      tags:
+        - "verifier"
+      summary: Triggers aggregation and submission to OriginStamp.
+      description: >-
+        This endpoint is not used by the client, but just to manually trigger the cronjob. <br>
+        Concatenates the hashes (plaintextHash and encryptedHash) of unverified files and submits to OriginStamp. <br>
+        A `Verifier` without data is created, as well as its relevant `DGFileVerifiers`
+      produces:
+        - application/json
+      parameters:
+        - name: currency
+          in: query
+          description: The OriginStamp object is associated with a single currency - 0 (Bitcoin), 1 (Ethereum), 2 (AION)
+          required: true
+          type: number
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+        400:
+          description: The curency parameter is missing or invalid
+          schema:
+            $ref: "#/components/schemas/Error"
+        500:
+          description: An internal server error has occurred.
+          schema:
+            $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - "verifier"
+      summary: Triggers proof download from OriginStamp.
+      description: >-
+        This endpoint is not used by the client, but just to manually trigger the cronjob. <br>
+        Generating the link to download OriginStamp costs credits and is ephemeral. <br>
+        This endpoint downloads and caches the proof from OriginStamp.
+      produces:
+        - application/json
+      parameters:
+        - name: currency
+          in: query
+          description: The OriginStamp object is associated with a single currency - 0 (Bitcoin), 1 (Ethereum), 2 (AION)
+          required: true
+          type: number
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+        400:
+          description: The curency parameter is missing or invalid
+          schema:
+            $ref: "#/components/schemas/Error"
+        500:
+          description: An internal server error has occurred.
+          schema:
+            $ref: "#/components/schemas/Error"
+  /verifier/data:
+    post:
+      tags: 
+        - "verifier"
+      summary: Download verifier proof file.
+      description: >-
+        Returns the cached proof file from OriginStamp.
+      produces:
+        - application/pdf
+      parameters:
+        - name: id
+          in: query
+          description: ID of Verifier
+          required: true
+          type: number
+      responses:
+        200:
+          description: Returns a file downloaded to user's desktop.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        400:
+          description: The id parameter is missing or invalid
+          schema:
+            $ref: "#/components/schemas/Error"
+        500:
+          description: An internal server error has occurred.
+          schema:
+            $ref: "#/components/schemas/Error"
