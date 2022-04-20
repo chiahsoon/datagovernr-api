@@ -6,9 +6,7 @@
 * [OriginStamp API](https://originstamp.com/)
 
 ## Development
-1. Create a `.env.development` file with the following variables:
-    * Note that `TYPEORM_ENTITIES`, `TYPEORM_MIGRATIONS`, `TYPEORM_SUBSCRIBERS` have fixed values; they are included due to weird issues with the *dotenv* package.
-    * You can find more information on values for typeorm [here](https://github.com/typeorm/typeorm).
+1. Create a `.env.development` file with the following variables (`TYPEORM_ENTITIES`, `TYPEORM_MIGRATIONS`, `TYPEORM_SUBSCRIBERS` are fixed values included due to weird issues that [typeorm]((https://github.com/typeorm/typeorm)) has with the *dotenv* package):
 
     | Key      | Value |
     | ----------- | ----------- |
